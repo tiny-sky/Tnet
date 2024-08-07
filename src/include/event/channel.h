@@ -10,11 +10,11 @@ namespace Tnet {
 class EventLoop;
 
 class Channel {
- public:
+  public:
   using EventCallback = std::function<void()>;
   using ReadEventCallback = std::function<void(Timestamp)>;
 
-  Channel(EventLoop *loop, int fd);
+  Channel(EventLoop* loop, int fd);
   ~Channel();
 
   // Poller 通知 fd 处理事件
@@ -27,7 +27,7 @@ class Channel {
   void setErrorCallback(EventCallback cb) { errorCallback_ = std::move(cb); }
 
   //
-  void tie(const std::shared_ptr<void> &);
+  void tie(const std::shared_ptr<void>&);
 
   int fd() const { return fd_; }
   int events() const { return events_; }
@@ -64,10 +64,15 @@ class Channel {
   void set_index(int idx) { index_ = idx; }
 
   // one loop per thread
-  EventLoop *ownerLoop() { return loop_; }
+  EventLoop* ownerLoop() { return loop_; }
   void remove();
 
- private:
+  // for debug
+  std::string reventsToString() const;
+  std::string eventsToString() const;
+
+  private:
+  static std::string eventsToString(int fd, int ev);
   void update();
   void handleEventWithGuard(Timestamp receiveTime);
 
@@ -75,7 +80,7 @@ class Channel {
   static const int kReadEvent;
   static const int kWriteEvent;
 
-  EventLoop *loop_;  // 事件循环
+  EventLoop* loop_;  // 事件循环
   const int fd_;     // fd，Poller监听的对象
   int events_;       // 注册fd感兴趣的事件
   int revents_;      // Poller返回的具体发生的事件

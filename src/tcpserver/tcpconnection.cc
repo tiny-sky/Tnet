@@ -11,21 +11,21 @@
 
 #include "event/channel.h"
 #include "event/eventloop.h"
-#include "util/log.h"
 #include "tcpserver/socket.h"
+#include "util/log.h"
 
 namespace Tnet {
 
-static EventLoop *CheckLoopNotNull(EventLoop *loop) {
+static EventLoop* CheckLoopNotNull(EventLoop* loop) {
   if (loop == nullptr) {
     LOG_ERROR("%s:%s:%d mainLoop is null!\n", __FILE__, __FUNCTION__, __LINE__);
   }
   return loop;
 }
 
-TcpConnection::TcpConnection(EventLoop *loop, const std::string &nameArg,
-                             int sockfd, const InetAddress &localAddr,
-                             const InetAddress &peerAddr)
+TcpConnection::TcpConnection(EventLoop* loop, const std::string& nameArg,
+                             int sockfd, const InetAddress& localAddr,
+                             const InetAddress& peerAddr)
     : loop_(CheckLoopNotNull(loop)),
       name_(nameArg),
       state_(kConnecting),
@@ -50,27 +50,31 @@ TcpConnection::~TcpConnection() {
            channel_->fd(), (int)state_);
 }
 
-void TcpConnection::send(const std::string &buf) {
+void TcpConnection::send(const std::string& buf) {
   if (state_ == kConnected) {
     if (loop_->isInLoopThread()) {
       sendInLoop(buf.c_str(), buf.size());
     } else {
-      loop_->runInLoop(std::bind(
-          &TcpConnection::sendInLoop, this, buf.c_str(), buf.size()));
+      loop_->runInLoop(
+          std::bind(&TcpConnection::sendInLoop, this, buf.c_str(), buf.size()));
     }
   }
 }
 
-void TcpConnection::sendInLoop(const char *data, std::size_t len) {
+void TcpConnection::sendInLoop(const char* data, std::size_t len) {
+  LOG_DEBUG("sending...");
+  loop_->assertInLoopThread();
   ssize_t nwrote = 0;
   std::size_t remaining = len;
   bool faultError = false;
 
   if (state_ == kDisconnected) {
     LOG_ERROR("disconnected, give up writing");
+    return;
   }
 
   if (!channel_->isWriting() && outputBuffer_.readableBytes() == 0) {
+    LOG_DEBUG("::write : %d -> %s", channel_->fd(), data);
     nwrote = ::write(channel_->fd(), data, len);
     if (nwrote >= 0) {
       remaining = len - nwrote;
@@ -96,7 +100,7 @@ void TcpConnection::sendInLoop(const char *data, std::size_t len) {
       loop_->queueInLoop(std::bind(highWaterMarkCallback_, shared_from_this(),
                                    oldlen + remaining));
     }
-    outputBuffer_.append((char *)data + nwrote, remaining);
+    outputBuffer_.append(static_cast<const char*>(data) + nwrote, remaining);
     if (!channel_->isWriting()) {
       channel_->enableWriting();
     }
@@ -138,10 +142,14 @@ void TcpConnection::connectDestroyed() {
 }
 
 void TcpConnection::handleRead(Timestamp receiveTime) {
+  loop_->assertInLoopThread();
   int savedErrno = 0;
   ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
-
   if (n > 0) {
+    LOG_DEBUG(
+        "messageCallback_(shared_from_this(), &inputBuffer_, receiveTime) -> "
+        "%zu",
+        n);
     messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
   } else if (n == 0) {
     handleClose();

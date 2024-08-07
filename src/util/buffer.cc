@@ -10,7 +10,7 @@ namespace Tnet {
  * 从文件描述符fd读取数据到缓冲区。
  * 使用readv进行高效读取，如果内部缓冲区不足，使用栈上额外空间暂存。
  */
-ssize_t Buffer::readFd(int fd, int *saveErrno) {
+ssize_t Buffer::readFd(int fd, int* saveErrno) {
   char extrabuf[65536];  // 额外的栈上空间，用于暂存数据
 
   struct iovec vec[2];
@@ -26,7 +26,7 @@ ssize_t Buffer::readFd(int fd, int *saveErrno) {
 
   if (n < 0) {
     *saveErrno = errno;
-  } else if (n <= static_cast<ssize_t>(writable)) {
+  } else if (static_cast<std::size_t>(n) <= writable) {
     writerIndex_ += n;
   } else {
     writerIndex_ = buffer_.size();
@@ -38,7 +38,7 @@ ssize_t Buffer::readFd(int fd, int *saveErrno) {
 /**
  * 将缓冲区数据通过文件描述符fd发送出去。
  */
-ssize_t Buffer::writeFd(int fd, int *saveErrno) {
+ssize_t Buffer::writeFd(int fd, int* saveErrno) {
   ssize_t n = ::write(fd, peek(), readableBytes());
   if (n < 0) {
     *saveErrno = errno;

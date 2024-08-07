@@ -7,16 +7,16 @@ namespace Tnet {
 class InetAddress;
 
 class Socket {
- public:
+  public:
   explicit Socket(int sockfd) : sockfd_(sockfd) {}
   ~Socket();
 
   DISALLOW_COPY(Socket)
 
   int fd() const { return sockfd_; }
-  void bindAddress(const InetAddress &localaddr);
+  void bindAddress(const InetAddress& localaddr);
   void listen();
-  int accept(InetAddress *peeraddr);
+  int accept(InetAddress* peeraddr);
 
   void shutdownWrite();
 
@@ -25,7 +25,7 @@ class Socket {
   void setReusePort(bool on);
   void setKeepAlive(bool on);
 
- private:
+  private:
   const int sockfd_;
 };
 }  // namespace Tnet

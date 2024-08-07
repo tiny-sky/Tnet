@@ -1,22 +1,31 @@
 #pragma once
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include <algorithm>
 #include <string>
 #include <vector>
+#include "util/macros.h"
+#include "util/log.h"
 
 namespace Tnet {
 class Buffer {
- public:
+  public:
   static const std::size_t kCheapPrepend = 8;    // 预留的前置空间
   static const std::size_t kInitialSize = 1024;  // 初始大小
 
   explicit Buffer(std::size_t initialSize = kInitialSize)
       : buffer_(kCheapPrepend + initialSize),
         readerIndex_(kCheapPrepend),
-        writerIndex_(kCheapPrepend) {}
+        writerIndex_(kCheapPrepend) {
+    assert(readableBytes() == 0);
+    assert(writableBytes() == initialSize);
+    assert(prependableBytes() == kCheapPrepend);
+  }
+
+  DISALLOW_COPY(Buffer);
 
   // 可读数据的大小
   std::size_t readableBytes() const { return writerIndex_ - readerIndex_; }
@@ -26,7 +35,7 @@ class Buffer {
   std::size_t prependableBytes() const { return readerIndex_; }
 
   // 获取可读数据的起始指针
-  const char *peek() const { return begin() + readerIndex_; }
+  const char* peek() const { return begin() + readerIndex_; }
 
   // 从缓冲区中移除len长度的数据
   void retrieve(std::size_t len) {
@@ -57,24 +66,24 @@ class Buffer {
   }
 
   // 向缓冲区追加数据
-  void append(const char *data, std::size_t len) {
+  void append(const char* data, std::size_t len) {
     ensureWritableBytes(len);
     std::copy(data, data + len, beginWrite());
     writerIndex_ += len;
   }
 
   // 获取可写数据的起始指针
-  char *beginWrite() { return begin() + writerIndex_; }
-  const char *beginWrite() const { return begin() + writerIndex_; }
+  char* beginWrite() { return begin() + writerIndex_; }
+  const char* beginWrite() const { return begin() + writerIndex_; }
 
   // 读取数据
-  ssize_t readFd(int fd, int *saveErrno);
+  ssize_t readFd(int fd, int* saveErrno);
   // 发送数据
-  ssize_t writeFd(int fd, int *saveErrno);
+  ssize_t writeFd(int fd, int* saveErrno);
 
- private:
-  char *begin() { return &*buffer_.begin(); }
-  const char *begin() const { return &*buffer_.begin(); }
+  private:
+  char* begin() { return &*buffer_.begin(); }
+  const char* begin() const { return &*buffer_.begin(); }
 
   // 扩容逻辑
   void makeSpace(std::size_t len) {
@@ -90,8 +99,8 @@ class Buffer {
   }
 
   std::vector<char> buffer_;  // 实际存储数据的vector
-  std::size_t readerIndex_;        // 读索引
-  std::size_t writerIndex_;        // 写索引
+  std::size_t readerIndex_;   // 读索引
+  std::size_t writerIndex_;   // 写索引
 };
 
 }  // namespace Tnet

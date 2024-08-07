@@ -59,7 +59,7 @@ class Logger {
   static const uint16_t ALL_OUTPUT = 3;      // 终端输出与文件输出
 
   void init(uint16_t output_level = 3) {
-    if (output_level & 0X1) {
+    if (output_level & 0x1) {
       // 创建一个彩色控制台日志接收器
       auto console_sink =
           std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -69,7 +69,7 @@ class Logger {
       sinks.push_back(console_sink);
     }
 
-    if (output_level & 0X10) {
+    if (output_level & 0x2) {
       // 创建一个基本文件日志接收器
       auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
           "logs/Tnet.log", true);

@@ -3,6 +3,9 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <cstring>
 
 #include "tcpserver/inetaddress.h"
 #include "util/log.h"
@@ -24,13 +27,13 @@ void Socket::listen() {
   }
 }
 
-int Socket::accept(InetAddress *peeraddr) {
+int Socket::accept(InetAddress* peeraddr) {
   sockaddr_in addr;
   socklen_t len = sizeof(addr);
   ::memset(&addr, 0, sizeof(addr));
 
   int connfd =
-      ::accept4(sockfd_, (sockaddr *)&addr, &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
+      ::accept4(sockfd_, (sockaddr*)&addr, &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
   if (connfd >= 0) {
     peeraddr->setSockAddr(addr);
   }

@@ -4,6 +4,7 @@
 
 #include <sys/epoll.h>
 
+#include <sstream>
 #include "event/eventloop.h"
 #include "util/log.h"
 
@@ -36,9 +37,33 @@ void Channel::remove() {
   loop_->removeChannel(this);
 }
 
+std::string Channel::reventsToString() const {
+  return eventsToString(fd_, revents_);
+}
+
+std::string Channel::eventsToString(int fd, int ev) {
+  std::ostringstream oss;
+  oss << fd << ": ";
+  if (ev & EPOLLIN)
+    oss << "IN ";
+  if (ev & EPOLLPRI)
+    oss << "PRI ";
+  if (ev & EPOLLOUT)
+    oss << "OUT ";
+  if (ev & EPOLLHUP)
+    oss << "HUP ";
+  if (ev & EPOLLRDHUP)
+    oss << "RDHUP ";
+  if (ev & EPOLLERR)
+    oss << "ERR ";
+
+  return oss.str();
+}
+
 void Channel::handleEvent(Timestamp receiveTime) {
+  std::shared_ptr<void> guard;
   if (tied_) {
-    std::shared_ptr<void> guard = tie_.lock();
+    guard = tie_.lock();
     if (guard) {
       handleEventWithGuard(receiveTime);
     }
@@ -48,7 +73,7 @@ void Channel::handleEvent(Timestamp receiveTime) {
 }
 
 void Channel::handleEventWithGuard(Timestamp receiveTime) {
-  LOG_INFO("channel handleEvent revents:%d\n", revents_);
+  LOG_INFO("channel handleEvent revents : %s\n", reventsToString().c_str());
 
   // shutdown 触发 EPOLLHUP 且无写数据
   if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {
@@ -69,6 +94,7 @@ void Channel::handleEventWithGuard(Timestamp receiveTime) {
     if (readCallback_) {
       readCallback_(receiveTime);
     }
+    LOG_DEBUG("remove reading...");
   }
   // 写事件
   if (revents_ & EPOLLOUT) {

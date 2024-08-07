@@ -30,5 +30,7 @@ std::string InetAddress::toIpPort() const {
   return ipPort;
 }
 
-uint16_t InetAddress::toPort() const { return ::ntohs(addr_.sin_port); }
+uint16_t InetAddress::toPort() const {
+  return ::ntohs(addr_.sin_port);
+}
 }  // namespace Tnet
