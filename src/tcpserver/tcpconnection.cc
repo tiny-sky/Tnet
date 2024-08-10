@@ -55,14 +55,31 @@ void TcpConnection::send(const std::string& buf) {
     if (loop_->isInLoopThread()) {
       sendInLoop(buf.c_str(), buf.size());
     } else {
-      loop_->runInLoop(
-          std::bind(&TcpConnection::sendInLoop, this, buf.c_str(), buf.size()));
+      void (TcpConnection::*fp)(const char* data, std::size_t len) =
+          &TcpConnection::sendInLoop;
+      loop_->runInLoop(std::bind(fp, this, buf.c_str(), buf.size()));
     }
   }
 }
 
+void TcpConnection::send(Buffer* buf) {
+  if (state_ == kConnected) {
+    if (loop_->isInLoopThread()) {
+      sendInLoop(buf->peek(), buf->readableBytes());
+      buf->retrieveAll();
+    } else {
+      void (TcpConnection::*fp)(const std::string& message) =
+          &TcpConnection::sendInLoop;
+      loop_->runInLoop(std::bind(fp, this, buf->retrieveAllAsString()));
+    }
+  }
+}
+
+void TcpConnection::sendInLoop(const std::string& message) {
+  sendInLoop(message.data(), message.size());
+}
+
 void TcpConnection::sendInLoop(const char* data, std::size_t len) {
-  LOG_DEBUG("sending...");
   loop_->assertInLoopThread();
   ssize_t nwrote = 0;
   std::size_t remaining = len;

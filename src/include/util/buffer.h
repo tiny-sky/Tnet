@@ -7,8 +7,9 @@
 #include <algorithm>
 #include <string>
 #include <vector>
-#include "util/macros.h"
+#include "tcpserver/endian.h"
 #include "util/log.h"
+#include "util/macros.h"
 
 namespace Tnet {
 class Buffer {
@@ -72,6 +73,22 @@ class Buffer {
     writerIndex_ += len;
   }
 
+  void append(const void* data, std::size_t len) {
+    append(static_cast<const char*>(data), len);
+  }
+
+  void appendInt32(int32_t x) {
+    int32_t be32 = Endian::hostToNetwork32(x);
+    append(&be32, sizeof(be32));
+  }
+
+  int32_t peekInt32() const {
+    assert(readableBytes() >= sizeof(int32_t));
+    int32_t be32 = 0;
+    ::memcpy(&be32,peek(),sizeof(int32_t));
+    return Endian::networkToHost32(be32);
+  }
+
   // 获取可写数据的起始指针
   char* beginWrite() { return begin() + writerIndex_; }
   const char* beginWrite() const { return begin() + writerIndex_; }
@@ -80,6 +97,23 @@ class Buffer {
   ssize_t readFd(int fd, int* saveErrno);
   // 发送数据
   ssize_t writeFd(int fd, int* saveErrno);
+
+  void hasWritten(std::size_t len) {
+    assert(len <= writableBytes());
+    writerIndex_ += len;
+  }
+
+  void unwrite(std::size_t len) {
+    assert(len <= readableBytes());
+    writerIndex_ -= len;
+  }
+
+  void prepend(const void* data, std::size_t len) {
+    assert(len <= prependableBytes());
+    readerIndex_ -= len;
+    const char* d = static_cast<const char*>(data);
+    std::copy(d, d + len, begin() + readerIndex_);
+  }
 
   private:
   char* begin() { return &*buffer_.begin(); }

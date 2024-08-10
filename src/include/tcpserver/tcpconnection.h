@@ -33,6 +33,7 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
 
   // 发送数据
   void send(const std::string& buf);
+  void send(Buffer* message);
   // 关闭连接
   void shutdown();
 
@@ -70,6 +71,7 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
   void handleError();
 
   void sendInLoop(const char* data, std::size_t len);
+  void sendInLoop(const std::string& message);
   void shutdownInLoop();
 
   EventLoop* loop_;
