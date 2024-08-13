@@ -5,6 +5,8 @@ add_library(
     inetaddress.cc
     socket.cc
     tcpconnection.cc
+    connector.cc
+    tcpclient.cc
     tcpserver.cc)
 
 target_include_directories(Tnet_tcpserver PUBLIC ${PROJECT_SOURCE_DIR}/src/include/tcpserver)

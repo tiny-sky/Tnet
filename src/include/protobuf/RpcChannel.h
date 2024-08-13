@@ -68,4 +68,5 @@ class RpcChannel : public ::google::protobuf::RpcChannel {
 
   const std::map<std::string, ::google::protobuf::Service*>* services_;
 };
+using RpcChannelPtr = std::shared_ptr<RpcChannel>;
 }  // namespace Tnet

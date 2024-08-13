@@ -1,4 +1,4 @@
-#pragma once;
+#pragma once
 
 #include "event/callbacks.h"
 #include "util/macros.h"
@@ -73,7 +73,7 @@ class ProtobufCodecLite {
                                 Buffer* buf);
   ErrorCode parse(const char* buf, int len,
                   ::google::protobuf::Message* message);
-  int32_t ProtobufCodecLite::parseInt32(const char* buf);
+  int32_t parseInt32(const char* buf);
 
   static int32_t checksum(const void* buf, int len);
   void fillEmptyBuffer(Buffer* buf, const google::protobuf::Message& message);
@@ -106,7 +106,7 @@ class ProtobufCodecLiteT {
         codec_(&MSG::default_instance(), TAG,
                std::bind(&ProtobufCodecLiteT::onRpcMessage, this, _1, _2, _3),
                rawCb, errorCb) {}
-  const string& tag() const { return codec_.tag(); }
+  const std::string& tag() const { return codec_.tag(); }
 
   void send(const TcpConnectionPtr& conn, const MSG& message) {
     codec_.send(conn, message);
@@ -120,11 +120,10 @@ class ProtobufCodecLiteT {
   // internal
   void onRpcMessage(const TcpConnectionPtr& conn, const MessagePtr& message,
                     Timestamp receiveTime) {
-    messageCallback_(conn, ::muduo::down_pointer_cast<MSG>(message),
-                     receiveTime);
+    messageCallback_(conn, down_pointer_cast<MSG>(message), receiveTime);
   }
 
-  void fillEmptyBuffer(muduo::net::Buffer* buf, const MSG& message) {
+  void fillEmptyBuffer(Buffer* buf, const MSG& message) {
     codec_.fillEmptyBuffer(buf, message);
   }
 

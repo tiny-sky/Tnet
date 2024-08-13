@@ -2,6 +2,7 @@ add_subdirectory(event)
 add_subdirectory(tcpserver)
 add_subdirectory(thread)
 add_subdirectory(util)
+add_subdirectory(protobuf)
 
 add_library(Tnet STATIC ${ALL_OBJECT_FILES})
 
@@ -10,6 +11,7 @@ set(TNET_LIBS
         Tnet_tcpserver
         Tnet_thread
         Tnet_util
+        Tnet_protobuf
         )
 
 find_package(Threads REQUIRED)

@@ -10,6 +10,8 @@
 #include "util/macros.h"
 #include "util/timestamp.h"
 
+#include <boost/any.hpp>
+
 namespace Tnet {
 
 class Channel;
@@ -36,6 +38,14 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
   void send(Buffer* message);
   // 关闭连接
   void shutdown();
+  void forceClose();
+  void forceCloseInLoop();
+
+  void setContext(const boost::any& context) { context_ = context; }
+
+  const boost::any& getConstContext() const { return context_; }
+
+  boost::any* getContext() { return &context_; }
 
   void setConnectionCallback(const ConnectionCallback& cb) {
     connectionCallback_ = cb;
@@ -95,5 +105,8 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
   // 数据缓冲区
   Buffer inputBuffer_;
   Buffer outputBuffer_;
+
+  // For protobuf
+  boost::any context_;
 };
 }  // namespace Tnet

@@ -16,6 +16,17 @@
 
 namespace Tnet {
 
+void defaultConnectionCallback(const TcpConnectionPtr& conn) {
+  LOG_INFO("Connection : %s -> %s is %s",
+           conn->localAddress().toIpPort().c_str(),
+           conn->peerAddress().toIpPort().c_str(),
+           (conn->connected() ? "UP" : "DOWN"));
+}
+
+void defaultMessageCallback(const TcpConnectionPtr&, Buffer* buf, Timestamp) {
+  buf->retrieveAll();
+}
+
 static EventLoop* CheckLoopNotNull(EventLoop* loop) {
   if (loop == nullptr) {
     LOG_ERROR("%s:%s:%d mainLoop is null!\n", __FILE__, __FUNCTION__, __LINE__);
@@ -128,6 +139,21 @@ void TcpConnection::shutdown() {
   if (state_ == kConnected) {
     setState(kDisconnecting);
     loop_->runInLoop(std::bind(&TcpConnection::shutdownInLoop, this));
+  }
+}
+
+void TcpConnection::forceClose() {
+  if (state_ == kConnected || state_ == kDisconnecting) {
+    setState(kDisconnecting);
+    loop_->queueInLoop(
+        std::bind(&TcpConnection::forceCloseInLoop, shared_from_this()));
+  }
+}
+
+void TcpConnection::forceCloseInLoop() {
+  loop_->assertInLoopThread();
+  if (state_ == kConnected || state_ == kDisconnecting) {
+    handleClose();
   }
 }
 

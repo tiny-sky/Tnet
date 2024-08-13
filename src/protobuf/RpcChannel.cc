@@ -2,7 +2,7 @@
 
 #include <google/protobuf/descriptor.h>
 #include <functional>
-#include "protobuf/rpc.pb.h"
+#include "rpc.pb.h"
 #include "util/log.h"
 
 namespace Tnet {
@@ -33,11 +33,14 @@ RpcChannel::~RpcChannel() {
   }
 }
 
+// send request
 void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
                             google::protobuf::RpcController* controller,
                             const ::google::protobuf::Message* request,
                             ::google::protobuf::Message* response,
                             ::google::protobuf::Closure* done) {
+  (void)controller; // TODO
+
   RpcMessage message;
   message.set_type(REQUEST);
   int id = id_.fetch_add(1, std::memory_order_seq_cst) + 1;
@@ -62,6 +65,8 @@ void RpcChannel::onMessage(const TcpConnectionPtr& conn, Buffer* buf,
 void RpcChannel::onRpcMessage(const TcpConnectionPtr& conn,
                               const RpcMessagePtr& messagePtr,
                               Timestamp receiveTime) {
+  (void)receiveTime;  //TODO
+
   assert(conn == conn_);
   RpcMessage& message = *messagePtr;
   if (message.type() == RESPONSE) {

@@ -4,10 +4,11 @@
 
 #include <zlib.h>
 #include "google/protobuf/message.h"
+#include "protobuf/RpcCodec.h"
 
 namespace Tnet {
 
-const char rpctag [] = "RPC0";
+const char rpctag[] = "RPC0";
 
 void ProtobufCodecLite::send(const TcpConnectionPtr& conn,
                              const ::google::protobuf::Message& message) {
@@ -102,7 +103,7 @@ int32_t ProtobufCodecLite::checksum(const void* buf, int len) {
 
 int ProtobufCodecLite::serializeToBuffer(
     const google::protobuf::Message& message, Buffer* buf) {
-  int byte_size = message.ByteSize();
+  int byte_size = message.ByteSizeLong();
 
   buf->ensureWritableBytes(byte_size + kChecksumLen);
 
@@ -110,7 +111,7 @@ int ProtobufCodecLite::serializeToBuffer(
   uint8_t* end = message.SerializeWithCachedSizesToArray(start);
 
   if (end - start != byte_size) {
-    int new_size = message.ByteSize();
+    int new_size = message.ByteSizeLong();
     GOOGLE_CHECK_EQ(byte_size, new_size)
         << "Protocol message was modified concurrently during serialization.";
     GOOGLE_CHECK_EQ(new_size, static_cast<int>(end - start))
@@ -123,27 +124,37 @@ int ProtobufCodecLite::serializeToBuffer(
   return byte_size;
 }
 
+namespace {
+const std::string kNoErrorStr = "NoError";
+const std::string kInvalidLengthStr = "InvalidLength";
+const std::string kCheckSumErrorStr = "CheckSumError";
+const std::string kInvalidNameLenStr = "InvalidNameLen";
+const std::string kUnknownMessageTypeStr = "UnknownMessageType";
+const std::string kParseErrorStr = "ParseError";
+const std::string kUnknownErrorStr = "UnknownError";
+}  // namespace
+
 const std::string& ProtobufCodecLite::errorCodeToString(ErrorCode errorCode) {
   switch (errorCode) {
     case kNoError:
-      return "NoError";
+      return kNoErrorStr;
     case kInvalidLength:
-      return "InvalidLength";
+      return kInvalidLengthStr;
     case kCheckSumError:
-      return "kCheckSumError";
+      return kCheckSumErrorStr;
     case kInvalidNameLen:
-      return "kInvalidNameLen";
+      return kInvalidNameLenStr;
     case kUnknownMessageType:
-      return "kUnknownMessageType";
+      return kUnknownMessageTypeStr;
     case kParseError:
-      return "kParseError";
+      return kParseErrorStr;
     default:
-      return "kUnknownError";
+      return kUnknownErrorStr;
   }
 }
 
 void ProtobufCodecLite::defaultErrorCallback(const TcpConnectionPtr& conn,
-                                             Buffer* buf, Timestamp,
+                                             Buffer*, Timestamp,
                                              ErrorCode errorCode) {
   LOG_ERROR("defaultErrorCallback - %s", errorCodeToString(errorCode).c_str());
   if (conn && conn->connected()) {
