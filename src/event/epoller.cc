@@ -35,7 +35,6 @@ Timestamp Epoller::poll(int timeoutMs, ChannelList* activeChannels) {
   Timestamp now;
 
   if (numEvents > 0) {
-    LOG_DEBUG("%d events happend\n", numEvents);
     fillActiveChannels(numEvents, activeChannels);
     if (static_cast<std::size_t>(numEvents) == events_.size()) {
       events_.resize(events_.size() * 2);

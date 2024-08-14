@@ -52,7 +52,6 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& nameArg,
   channel_->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
   channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
 
-  LOG_INFO("TcpConnection::ctor[%s] at fd=%d\n", name_.c_str(), sockfd);
   socket_->setKeepAlive(true);
 }
 
@@ -102,7 +101,6 @@ void TcpConnection::sendInLoop(const char* data, std::size_t len) {
   }
 
   if (!channel_->isWriting() && outputBuffer_.readableBytes() == 0) {
-    LOG_DEBUG("::write : %d -> %s", channel_->fd(), data);
     nwrote = ::write(channel_->fd(), data, len);
     if (nwrote >= 0) {
       remaining = len - nwrote;
@@ -185,14 +183,11 @@ void TcpConnection::connectDestroyed() {
 }
 
 void TcpConnection::handleRead(Timestamp receiveTime) {
+  LOG_DEBUG("TcpConnection -> handleRead");
   loop_->assertInLoopThread();
   int savedErrno = 0;
   ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
   if (n > 0) {
-    LOG_DEBUG(
-        "messageCallback_(shared_from_this(), &inputBuffer_, receiveTime) -> "
-        "%zu",
-        n);
     messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
   } else if (n == 0) {
     handleClose();
@@ -204,6 +199,7 @@ void TcpConnection::handleRead(Timestamp receiveTime) {
 }
 
 void TcpConnection::handleWrite() {
+  LOG_DEBUG("TcpConnection -> handleWrite");
   if (channel_->isWriting()) {
     int savedErrno = 0;
     ssize_t n = outputBuffer_.writeFd(channel_->fd(), &savedErrno);

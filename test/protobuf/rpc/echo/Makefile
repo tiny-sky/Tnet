@@ -1,15 +1,16 @@
 CC=g++
+PROTOC=protoc
 
 # 设置编译选项
 CFLAGS=-I../../../../src/include -fsanitize=address
 LDFLAGS=-lTnet -lprotobuf -lfmt -lpthread -lz
 
 # 定义proto文件
-PROTO_FILE=sudoku.proto
+PROTO_FILE=echo.proto
 
 # 生成的源文件
-PROTO_SRC=sudoku.pb.cc
-PROTO_HEADER=sudoku.pb.h
+PROTO_SRC=echo.pb.cc
+PROTO_HEADER=echo.pb.h
 
 COMMON=$(PROTO_SRC)
 
@@ -27,6 +28,6 @@ client: client.cc $(COMMON)
 	$(CC) -o client client.cc $(COMMON) $(CFLAGS) $(LDFLAGS)
 
 clean:
-	rm -f server client 
+	rm -f server client
 
 .PHONY: all proto clean

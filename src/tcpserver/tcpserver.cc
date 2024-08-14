@@ -65,9 +65,6 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr) {
   ++nextConnId_;
   std::string connName = name_ + buf;
 
-  LOG_INFO("TcpServer::newConnection [%s] - new connection [%s] from %s\n",
-           name_.c_str(), connName.c_str(), peerAddr.toIpPort().c_str());
-
   sockaddr_in local;
   ::memset(&local, 0, sizeof(local));
   socklen_t addrlen = sizeof(local);
@@ -78,6 +75,9 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr) {
   InetAddress localAddr(local);
   TcpConnectionPtr conn = std::make_shared<TcpConnection>(
       ioLoop, connName, sockfd, localAddr, peerAddr);
+
+  LOG_INFO("TcpServer::newConnection [%s] - new connection [%s] from %s\n",
+           name_.c_str(), connName.c_str(), peerAddr.toIpPort().c_str());
 
   connections_[connName] = conn;
   conn->setConnectionCallback(connectionCallback_);

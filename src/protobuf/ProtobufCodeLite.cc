@@ -18,7 +18,7 @@ void ProtobufCodecLite::send(const TcpConnectionPtr& conn,
 }
 
 void ProtobufCodecLite::fillEmptyBuffer(
-    Buffer* buf, const google::protobuf::Message& message) {
+  Buffer* buf, const google::protobuf::Message& message) {
   buf->append(tag_.data(), tag_.size());
   int byte_size = serializeToBuffer(message, buf);
 

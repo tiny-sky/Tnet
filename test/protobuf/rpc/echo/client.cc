@@ -1,29 +1,26 @@
-#include "sudoku.pb.h"
+#include "echo.pb.h"
 
+#include "event/callbacks.h"
 #include "event/eventloop.h"
 #include "protobuf/RpcChannel.h"
 #include "tcpserver/inetaddress.h"
 #include "tcpserver/tcpclient.h"
 #include "tcpserver/tcpconnection.h"
 #include "util/log.h"
-#include "event/callbacks.h"
 
 #include <google/protobuf/message.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <iostream>
 
 using namespace Tnet;
 
-class RpcClient {
+class EchoClient {
   public:
-  RpcClient(EventLoop* loop, const InetAddress& serverAddr)
+  EchoClient(EventLoop* loop, const InetAddress& serverAddr)
       : loop_(loop),
         client_(loop, serverAddr, "RpcClient"),
         channel_(new RpcChannel),
         stub_(channel_.get()) {
     client_.setConnectionCallback(
-        std::bind(&RpcClient::onConnection, this, _1));
+        std::bind(&EchoClient::onConnection, this, _1));
     client_.setMessageCallback(
         std::bind(&RpcChannel::onMessage, channel_.get(), _1, _2, _3));
   }
@@ -32,37 +29,38 @@ class RpcClient {
 
   private:
   void onConnection(const TcpConnectionPtr& conn) {
+    LOG_INFO("Connection established");
     if (conn->connected()) {
       channel_->setConnection(conn);
-      sudoku::SudokuRequest request;
-      request.set_checkerboard("001010");
-      sudoku::SudokuResponse* response = new sudoku::SudokuResponse;
+      echo::EchoRequest request;
+      request.set_msg("Hello World");
+      echo::EchoResponse* response = new echo::EchoResponse;
 
-      LOG_DEBUG("request -> %s",request.DebugString().c_str());
-
-      stub_.Solve(nullptr, &request, response,
-                  NewCallback(this, &RpcClient::solved, response));
+      stub_.Echo(nullptr, &request, response,
+                 NewCallback(this, &EchoClient::echo, response));
     }
   }
 
-  void solved(sudoku::SudokuResponse* resp) {
-    LOG_INFO("%s", resp->DebugString().c_str());
+  void echo(echo::EchoResponse* resp) {
+    std::cout << "Client receive -> " << resp->DebugString().c_str() << std::endl;
     client_.disconnect();
+    LOG_DEBUG("Disconnect...");
   }
   EventLoop* loop_;
   TcpClient client_;
   RpcChannelPtr channel_;
-  sudoku::SudokuService::Stub stub_;
+  echo::EchoService_Stub stub_;
 };
 
 int main(int argc, char* argv[]) {
-  LOG_INFO("pid = %d", getpid());
   if (argc > 1) {
+    Tnet::Logger log;
+    log.init();
     EventLoop loop;
-    InetAddress serverAddr(9981, argv[1]);
+    InetAddress serverAddr(6666, argv[1]);
 
-    RpcClient rpcClient(&loop, serverAddr);
-    rpcClient.connect();
+    EchoClient client(&loop, serverAddr);
+    client.connect(); // 建立 sockfd ，监听可写事件
     loop.loop();
   } else {
     std::cout << "Usage: " << argv[0] << "host_ip" << std::endl;

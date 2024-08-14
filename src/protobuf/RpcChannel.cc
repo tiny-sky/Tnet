@@ -14,14 +14,14 @@ using std::placeholders::_3;
 RpcChannel::RpcChannel()
     : codec_(std::bind(&RpcChannel::onRpcMessage, this, _1, _2, _3)),
       services_(nullptr) {
-  LOG_INFO("RpcChannel::creat -> %p", this);
+  LOG_INFO("Create RpcChannel");
 }
 
 RpcChannel::RpcChannel(const TcpConnectionPtr& conn)
     : codec_(std::bind(&RpcChannel::onRpcMessage, this, _1, _2, _3)),
       conn_(conn),
       services_(nullptr) {
-  LOG_INFO("RpcChannel::creat -> %p", this);
+  LOG_INFO("Create RpcChannel");
 }
 
 RpcChannel::~RpcChannel() {
@@ -39,7 +39,7 @@ void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
                             const ::google::protobuf::Message* request,
                             ::google::protobuf::Message* response,
                             ::google::protobuf::Closure* done) {
-  (void)controller; // TODO
+  (void)controller;  // TODO
 
   RpcMessage message;
   message.set_type(REQUEST);
@@ -70,6 +70,7 @@ void RpcChannel::onRpcMessage(const TcpConnectionPtr& conn,
   assert(conn == conn_);
   RpcMessage& message = *messagePtr;
   if (message.type() == RESPONSE) {
+    LOG_INFO("RESPONSE Message");
     int64_t id = message.id();
     assert(message.has_response() || message.has_error());
 
@@ -94,6 +95,7 @@ void RpcChannel::onRpcMessage(const TcpConnectionPtr& conn,
       }
     }
   } else if (message.type() == REQUEST) {
+    LOG_INFO("REQUEST Message");
     ErrorCode error = WRONG_PROTO;
     if (services_) {
       std::map<std::string, google::protobuf::Service*>::const_iterator it =
@@ -143,6 +145,8 @@ void RpcChannel::doneCallback(::google::protobuf::Message* response,
   RpcMessage message;
   message.set_type(RESPONSE);
   message.set_id(id);
+  LOG_DEBUG("response->SerializeAsString() -> %s",
+            response->SerializeAsString().c_str());
   message.set_response(response->SerializeAsString());
   codec_.send(conn_, message);
 }

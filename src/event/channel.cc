@@ -73,7 +73,7 @@ void Channel::handleEvent(Timestamp receiveTime) {
 }
 
 void Channel::handleEventWithGuard(Timestamp receiveTime) {
-  LOG_INFO("channel handleEvent revents : %s\n", reventsToString().c_str());
+  LOG_INFO("%d channel handleEvent revents -> %s\n",fd_,reventsToString().c_str());
 
   // shutdown 触发 EPOLLHUP 且无写数据
   if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {
@@ -94,7 +94,6 @@ void Channel::handleEventWithGuard(Timestamp receiveTime) {
     if (readCallback_) {
       readCallback_(receiveTime);
     }
-    LOG_DEBUG("remove reading...");
   }
   // 写事件
   if (revents_ & EPOLLOUT) {

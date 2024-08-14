@@ -40,11 +40,10 @@ void testSPDLog() {
   writeLog(10);
 }
 
+// int main() {
+//   Tnet::Logger log;
+//   log.init();
+//   LOG_INFO("%s : %s : YES", "hello", "WORLD");
 
-int main() {
-  Tnet::Logger log;
-  log.init();
-  LOG_INFO("%s : %s : YES", "hello", "WORLD");
-
-  return 0;
-}
+//   return 0;
+// }

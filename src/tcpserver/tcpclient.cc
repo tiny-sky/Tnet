@@ -31,8 +31,7 @@ TcpClient::TcpClient(EventLoop* loop, const InetAddress& serverAddr,
   connector_->setNewConnectionCallback(
       std::bind(&TcpClient::newConnection, this, _1));
 
-  LOG_INFO("TcpClient::TcpClient[%s] - connector %p", name_.c_str(),
-           connector_.get());
+  LOG_INFO("Create TcpClient -> [%s]", name_.c_str());
 }
 
 TcpClient::~TcpClient() {
@@ -92,6 +91,7 @@ void TcpClient::newConnection(int sockfd) {
   TcpConnectionPtr conn = std::make_shared<TcpConnection>(
       loop_, connName, sockfd, localAddr, peerAddr);
 
+  LOG_INFO("Create TcpConnection : sockfd -> [%d]",sockfd);
   conn->setConnectionCallback(connectionCallback_);
   conn->setMessageCallback(messageCallback_);
   conn->setWriteCompleteCallback(writeCompleteCallback_);

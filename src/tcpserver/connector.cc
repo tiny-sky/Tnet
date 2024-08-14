@@ -18,11 +18,10 @@ Connector::Connector(EventLoop* loop, const InetAddress& serverAddr)
       connect_(false),
       state_(kDisconnected),
       retryDelayMs_(kInitRetryDelayMs) {
-  LOG_DEBUG("Connector::ctor[%p]", this);
 }
 
 Connector::~Connector() {
-  LOG_DEBUG("Connector::dtor[%p]", this);
+  LOG_DEBUG("Delete Connector");
 }
 
 void Connector::start() {
@@ -30,8 +29,7 @@ void Connector::start() {
   loop_->runInLoop(std::bind(&Connector::startInLoop, this));
 }
 
-void Connector::restart()
-{
+void Connector::restart() {
   loop_->assertInLoopThread();
   setState(kDisconnected);
   retryDelayMs_ = kInitRetryDelayMs;

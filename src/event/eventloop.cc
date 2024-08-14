@@ -35,7 +35,7 @@ EventLoop::EventLoop()
       callingPendingFunctors_(false),
       wakeupFd_(createEventfd()),
       wakeupChannel_(new Channel(this, wakeupFd_)) {
-  LOG_INFO("EventLoop created %p in thread %d\n", this, threadId_);
+  LOG_INFO("Create EventLoop in thread -> [%d]\n", threadId_);
   if (t_loopInThisThread) {
     LOG_ERROR("Another EventLoop %p exists in this thread %d\n",
               t_loopInThisThread, threadId_);
